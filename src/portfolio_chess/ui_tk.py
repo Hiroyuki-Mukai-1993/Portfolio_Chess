@@ -4,6 +4,7 @@ import tkinter as tk
 from dataclasses import dataclass
 from functools import partial
 from tkinter import messagebox, simpledialog
+from typing import Final
 
 from portfolio_chess.core.board import Board
 from portfolio_chess.core.game import Game
@@ -23,6 +24,12 @@ MARGIN = 20
 BOARD_PX = SQUARE_SIZE * 8
 CANVAS_W = BOARD_PX + MARGIN * 2
 CANVAS_H = BOARD_PX + MARGIN * 2
+PROMOTION_OPTIONS: Final[tuple[tuple[PromotionCode, str], ...]] = (
+    ("q", "Queen"),
+    ("r", "Rook"),
+    ("b", "Bishop"),
+    ("n", "Knight"),
+)
 
 
 def sq_to_xy(sq: int) -> tuple[int, int]:
@@ -172,13 +179,7 @@ class ChessTkApp:
         frame = tk.Frame(win)
         frame.pack(padx=10, pady=10)
 
-        for p, name in [
-            ("q", "Queen"),
-            ("r", "Rook"),
-            ("b", "Bishop"),
-            ("n", "Knight"),
-        ]:
-            code: PromotionCode = p
+        for code, name in PROMOTION_OPTIONS:
             display = code.upper() if color == Color.WHITE else code.lower()
             tk.Button(
                 frame,
@@ -191,7 +192,7 @@ class ChessTkApp:
         self.root.wait_window(win)
         return result["p"]
 
-    def on_click(self, event: tk.Event[tk.EventType]) -> None:
+    def on_click(self, event: tk.Event[tk.Canvas]) -> None:
         if self.game.is_over:
             return
 
