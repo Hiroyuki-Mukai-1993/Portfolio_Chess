@@ -1,0 +1,11 @@
+﻿.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
