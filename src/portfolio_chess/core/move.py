@@ -1,7 +1,7 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from .types import square_to_index
 
@@ -27,6 +27,7 @@ class Move:
             p = uci[4].lower()
             if p not in ("q", "r", "b", "n"):
                 raise ValueError(f"Invalid promotion piece: {uci!r}")
-            promo = p
+            promo = cast(PromotionCode, p)
 
         return cls(from_sq=from_sq, to_sq=to_sq, promotion=promo)
+

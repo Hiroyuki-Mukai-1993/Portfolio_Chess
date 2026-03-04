@@ -2,10 +2,13 @@
 
 import tkinter as tk
 from dataclasses import dataclass
+from functools import partial
 from tkinter import messagebox, simpledialog
 
+from portfolio_chess.core.board import Board
 from portfolio_chess.core.game import Game
-from portfolio_chess.core.move import Move
+from portfolio_chess.core.move import Move, PromotionCode
+from portfolio_chess.core.rules import Rules
 from portfolio_chess.core.types import Color, PieceType
 
 
@@ -94,7 +97,9 @@ class ChessTkApp:
         tk.Button(control2, text="Copy FEN", command=self.on_copy_fen).pack(side="left", padx=2)
         tk.Button(control2, text="Copy PGN", command=self.on_copy_pgn).pack(side="left", padx=2)
 
-        tk.Label(right, text="Moves (SAN)", font=("Consolas", 12, "bold")).pack(anchor="w", padx=8, pady=(8, 0))
+        tk.Label(right, text="Moves (SAN)", font=("Consolas", 12, "bold")).pack(
+            anchor="w", padx=8, pady=(8, 0)
+        )
         self.log_list = tk.Listbox(right, width=32, height=24, font=("Consolas", 11))
         self.log_list.pack(side="left", fill="y", padx=(8, 0), pady=8)
 
@@ -109,11 +114,11 @@ class ChessTkApp:
         self.redraw()
 
     @property
-    def board(self):
+    def board(self) -> Board:
         return self.game.board
 
     @property
-    def rules(self):
+    def rules(self) -> Rules:
         return self.game.rules
 
     def redraw(self) -> None:
@@ -131,7 +136,9 @@ class ChessTkApp:
             if self.state.selected_sq == sq:
                 fill = "#9dc3e6"
 
-            self.canvas.create_rectangle(x, y, x + SQUARE_SIZE, y + SQUARE_SIZE, fill=fill, outline="black")
+            self.canvas.create_rectangle(
+                x, y, x + SQUARE_SIZE, y + SQUARE_SIZE, fill=fill, outline="black"
+            )
 
         for sq, piece in self.board.pieces.items():
             x, y = sq_to_xy(sq)
@@ -148,34 +155,43 @@ class ChessTkApp:
 
         self._update_status()
 
-    def choose_promotion(self, color: Color) -> str | None:
+    def choose_promotion(self, color: Color) -> PromotionCode | None:
         win = tk.Toplevel(self.root)
         win.title("Choose promotion")
         win.transient(self.root)
         win.grab_set()
 
-        result: dict[str, str | None] = {"p": None}
+        result: dict[str, PromotionCode | None] = {"p": None}
 
         tk.Label(win, text="Promote to:", font=("Consolas", 12)).pack(padx=10, pady=10)
 
-        def pick(p: str) -> None:
+        def pick(p: PromotionCode) -> None:
             result["p"] = p
             win.destroy()
 
         frame = tk.Frame(win)
         frame.pack(padx=10, pady=10)
 
-        for p, name in [("q", "Queen"), ("r", "Rook"), ("b", "Bishop"), ("n", "Knight")]:
-            display = p.upper() if color == Color.WHITE else p.lower()
-            tk.Button(frame, text=f"{display} ({name})", width=14, command=lambda pp=p: pick(pp)).pack(
-                side="left", padx=4
-            )
+        for p, name in [
+            ("q", "Queen"),
+            ("r", "Rook"),
+            ("b", "Bishop"),
+            ("n", "Knight"),
+        ]:
+            code: PromotionCode = p
+            display = code.upper() if color == Color.WHITE else code.lower()
+            tk.Button(
+                frame,
+                text=f"{display} ({name})",
+                width=14,
+                command=partial(pick, code),
+            ).pack(side="left", padx=4)
 
         win.protocol("WM_DELETE_WINDOW", win.destroy)
         self.root.wait_window(win)
         return result["p"]
 
-    def on_click(self, event: tk.Event) -> None:
+    def on_click(self, event: tk.Event[tk.EventType]) -> None:
         if self.game.is_over:
             return
 
@@ -214,7 +230,9 @@ class ChessTkApp:
             piece = self.board.pieces.get(from_sq)
             if piece is not None and piece.kind == PieceType.PAWN:
                 to_rank = to_sq // 8
-                if (piece.color == Color.WHITE and to_rank == 7) or (piece.color == Color.BLACK and to_rank == 0):
+                if (piece.color == Color.WHITE and to_rank == 7) or (
+                    piece.color == Color.BLACK and to_rank == 0
+                ):
                     promo = self.choose_promotion(piece.color)
                     if promo is None:
                         self.status_var.set("Promotion canceled.")
