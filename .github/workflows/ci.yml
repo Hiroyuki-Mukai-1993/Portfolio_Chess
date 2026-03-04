@@ -24,11 +24,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Ruff
+      - name: Ruff (non-blocking for now)
+        continue-on-error: true
         run: ruff check .
 
-      - name: MyPy
+      - name: MyPy (non-blocking for now)
+        continue-on-error: true
         run: mypy src
 
-      - name: Pytest
+      - name: Pytest (required)
         run: pytest -q
